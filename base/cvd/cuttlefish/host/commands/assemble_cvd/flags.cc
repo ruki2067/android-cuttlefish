@@ -42,7 +42,6 @@
 #include "cuttlefish/common/libs/utils/contains.h"
 #include "cuttlefish/common/libs/utils/files.h"
 #include "cuttlefish/common/libs/utils/flag_parser.h"
-#include "cuttlefish/common/libs/utils/json.h"
 #include "cuttlefish/common/libs/utils/known_paths.h"
 #include "cuttlefish/common/libs/utils/network.h"
 #include "cuttlefish/host/commands/assemble_cvd/alloc.h"
@@ -55,6 +54,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/display_proto.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/mcu_config_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/vm_manager.h"
 #include "cuttlefish/host/commands/assemble_cvd/graphics_flags.h"
@@ -366,7 +366,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
     const std::string& root_dir, const std::vector<GuestConfig>& guest_configs,
     fruit::Injector<>& injector, const FetcherConfig& fetcher_config,
     const BootImageFlag& boot_image, const InitramfsPathFlag& initramfs_path,
-    const KernelPathFlag& kernel_path,
+    const KernelPathFlag& kernel_path, const SuperImageFlag& super_image,
     const SystemImageDirFlag& system_image_dir,
     const VmManagerFlag& vm_manager_flag) {
   CuttlefishConfig tmp_config_obj;
@@ -634,7 +634,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
   std::vector<bool> vhost_user_block_vec =
       CF_EXPECT(GET_FLAG_BOOL_VALUE(vhost_user_block));
 
-  std::vector<std::string> mcu_config_vec = CF_EXPECT(GET_FLAG_STR_VALUE(mcu_config_path));
+  McuConfigPathFlag mcu_config_paths = McuConfigPathFlag::FromGlobalGflags();
 
   std::vector<std::string> vcpu_config_vec =
       CF_EXPECT(GET_FLAG_STR_VALUE(vcpu_config_path));
@@ -1253,16 +1253,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
               "TODO(b/286284441): slirp only works on QEMU");
     instance.set_external_network_mode(external_network_mode);
 
-    if (!mcu_config_vec[instance_index].empty()) {
-      auto mcu_cfg_path = mcu_config_vec[instance_index];
-      CF_EXPECT(FileExists(mcu_cfg_path), "MCU config file does not exist");
-      std::string file_content;
-      using android::base::ReadFileToString;
-      CF_EXPECT(ReadFileToString(mcu_cfg_path.c_str(), &file_content,
-                                 /* follow_symlinks */ true),
-                "Failed to read mcu config file");
-      instance.set_mcu(CF_EXPECT(ParseJson(file_content), "Failed parsing JSON file"));
-    }
+    instance.set_mcu(CF_EXPECT(mcu_config_paths.JsonForIndex(instance_index)));
 
     if (!vcpu_config_vec[instance_index].empty()) {
       auto vcpu_cfg_path = vcpu_config_vec[instance_index];
@@ -1337,7 +1328,7 @@ Result<CuttlefishConfig> InitializeCuttlefishConfiguration(
 
   CF_EXPECT(DiskImageFlagsVectorization(
       tmp_config_obj, fetcher_config, efi_loader, boot_image, bootloader,
-      initramfs_path, kernel_path, system_image_dir));
+      initramfs_path, kernel_path, super_image, system_image_dir));
 
   return tmp_config_obj;
 }
@@ -1379,15 +1370,6 @@ void SetDefaultFlagsForGem5() {
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 
   SetCommandLineOptionWithMode("cpus", "1",
-                               google::FlagSettingMode::SET_FLAGS_DEFAULT);
-}
-
-void SetDefaultFlagsForMcu() {
-  auto path = DefaultHostArtifactsPath("etc/mcu_config.json");
-  if (!CanAccess(path, R_OK)) {
-    return;
-  }
-  SetCommandLineOptionWithMode("mcu_config_path", path.c_str(),
                                google::FlagSettingMode::SET_FLAGS_DEFAULT);
 }
 
@@ -1441,8 +1423,6 @@ Result<void> SetFlagDefaultsForVmm(
   }
 
   SetDefaultFlagsForOpenwrt(guest_configs[0].target_arch);
-
-  SetDefaultFlagsForMcu();
 
   // Set the env variable to empty (in case the caller passed a value for it).
   unsetenv(kCuttlefishConfigEnvVarName);

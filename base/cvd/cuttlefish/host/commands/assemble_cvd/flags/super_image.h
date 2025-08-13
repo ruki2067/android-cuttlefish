@@ -13,25 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
-#include <stdint.h>
+#include <stddef.h>
 
-// Binary format for the runtime <partition>/etc/fs_config_(dirs|files) filesystem override files.
-struct fs_path_config_from_file {
-    uint16_t len;
-    uint16_t mode;
-    uint16_t uid;
-    uint16_t gid;
-    uint64_t capabilities;
-    char prefix[];
-} __attribute__((__aligned__(sizeof(uint64_t))));
+#include <string>
+#include <vector>
 
-struct fs_path_config {
-    unsigned mode;
-    unsigned uid;
-    unsigned gid;
-    uint64_t capabilities;
-    const char* prefix;
+#include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
+
+namespace cuttlefish {
+
+/* Super image flag, `--super_image` */
+class SuperImageFlag {
+ public:
+  static SuperImageFlag FromGlobalGflags(const SystemImageDirFlag&);
+
+  std::string SuperImageForIndex(size_t index) const;
+
+  bool IsDefault() const;
+
+ private:
+  SuperImageFlag(const SystemImageDirFlag&, std::vector<std::string>);
+
+  const SystemImageDirFlag& system_image_dir_;
+  std::vector<std::string> super_images_;
 };
+
+}  // namespace cuttlefish

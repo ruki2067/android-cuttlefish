@@ -199,8 +199,6 @@ DECLARE_vec(device_external_network);
 
 DECLARE_bool(snapshot_compatible);
 
-DECLARE_vec(mcu_config_path);
-
 DECLARE_string(straced_host_executables);
 
 DECLARE_vec(fail_fast);
@@ -222,7 +220,6 @@ DECLARE_string(instance_dir);
 DECLARE_string(snapshot_path);
 DECLARE_bool(resume);
 
-DECLARE_string(super_image);
 DECLARE_string(vendor_boot_image);
 DECLARE_string(vbmeta_image);
 DECLARE_string(vbmeta_system_image);

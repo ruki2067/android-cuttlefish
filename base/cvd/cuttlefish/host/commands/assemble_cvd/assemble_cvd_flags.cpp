@@ -429,9 +429,6 @@ DEFINE_bool(snapshot_compatible, false,
             "Declaring that device is snapshot'able and runs with only "
             "supported ones.");
 
-DEFINE_vec(mcu_config_path, CF_DEFAULTS_MCU_CONFIG_PATH,
-           "configuration file for the MCU emulator");
-
 DEFINE_string(straced_host_executables, CF_DEFAULTS_STRACED_HOST_EXECUTABLES,
               "Comma-separated list of executable names to run under strace "
               "to collect their system call information.");
@@ -475,9 +472,6 @@ DEFINE_bool(resume, CF_DEFAULTS_RESUME,
             "in. This flag is ignored if the underlying partition "
             "images have been updated since the first launch."
             "If the device starts from a snapshot, this will be always true.");
-
-DEFINE_string(super_image, CF_DEFAULTS_SUPER_IMAGE,
-              "Location of the super partition image.");
 DEFINE_string(
     vendor_boot_image, CF_DEFAULTS_VENDOR_BOOT_IMAGE,
     "Location of cuttlefish vendor boot image. If empty it is assumed to "

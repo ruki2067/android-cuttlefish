@@ -20,6 +20,7 @@
 #include "cuttlefish/host/commands/assemble_cvd/flags/boot_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/initramfs_path.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/kernel_path.h"
+#include "cuttlefish/host/commands/assemble_cvd/flags/super_image.h"
 #include "cuttlefish/host/commands/assemble_cvd/flags/system_image_dir.h"
 
 namespace cuttlefish {
@@ -27,6 +28,7 @@ namespace cuttlefish {
 Result<void> ResolveInstanceFiles(const BootImageFlag&,
                                   const InitramfsPathFlag&,
                                   const KernelPathFlag& kernel_path,
+                                  const SuperImageFlag&,
                                   const SystemImageDirFlag& system_image_dir);
 
 }  // namespace cuttlefish
